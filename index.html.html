@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rock Paper Scissors Multiplayer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #fff);
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .players {
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 5px;
+      margin: 0 10px;
+    }
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 10px;
+      border: 2px solid #00796b;
+    }
+    .scoreboard {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .choices {
+      margin: 20px 0;
+    }
+    .choices button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 0 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #00796b;
+      color: white;
+      transition: transform 0.2s ease, background-color 0.3s ease;
+    }
+    .choices button:hover {
+      transform: scale(1.1);
+      background-color: #004d40;
+    }
+    .result {
+      font-size: 20px;
+      margin-top: 20px;
+    }
+    .leaderboard {
+      margin-top: 30px;
+      font-size: 16px;
+    }
+    .leaderboard table {
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    .leaderboard th, .leaderboard td {
+      border: 1px solid #333;
+      padding: 8px 12px;
+    }
+    .reset-btn {
+      margin-top: 20px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #d32f2f;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    .reset-btn:hover {
+      background-color: #b71c1c;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rock Paper Scissors</h1>
+  <div class="players">
+    <img src="https://i.pravatar.cc/50?u=player1" class="avatar" />
+    <input type="text" id="player1" placeholder="Player 1" />
+    <img src="https://i.pravatar.cc/50?u=player2" class="avatar" />
+    <input type="text" id="player2" placeholder="Player 2" />
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <div class="scoreboard">
+    <span id="score1">0</span> - <span id="score2">0</span>
+  </div>
+
+  <div class="choices" id="choices" style="display:none;">
+    <h3 id="turnIndicator">Player 1's turn</h3>
+    <button onclick="makeChoice('rock')">🪨 Rock</button>
+    <button onclick="makeChoice('paper')">📄 Paper</button>
+    <button onclick="makeChoice('scissors')">✂️ Scissors</button>
+  </div>
+
+  <div class="result" id="result">Enter player names and start the game</div>
+
+  <button class="reset-btn" onclick="resetGame()">🔁 Reset Game</button>
+
+  <div class="leaderboard">
+    <h3>Leaderboard</h3>
+    <table>
+      <thead>
+        <tr><th>Player</th><th>Wins</th></tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Sound Effects -->
+  <audio id="clickSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+  <audio id="winSound" src="https://www.soundjay.com/button/sounds/button-10.mp3"></audio>
+  <audio id="drawSound" src="https://www.soundjay.com/button/sounds/button-3.mp3"></audio>
+
+  <script>
+    let player1 = '', player2 = '';
+    let score1 = 0, score2 = 0;
+    let turn = 1;
+    let choices = {};
+
+    function startGame() {
+      player1 = document.getElementById('player1').value || 'Player 1';
+      player2 = document.getElementById('player2').value || 'Player 2';
+      document.getElementById('result').textContent = `${player1}, make your move!`;
+      document.getElementById('choices').style.display = 'block';
+      document.getElementById('turnIndicator').textContent = `${player1}'s turn`;
+      updateLeaderboard();
+    }
+
+    function makeChoice(choice) {
+      document.getElementById('clickSound').play();
+      if (turn === 1) {
+        choices.player1 = choice;
+        document.getElementById('turnIndicator').textContent = `${player2}'s turn`;
+        turn = 2;
+      } else {
+        choices.player2 = choice;
+        determineWinner();
+        turn = 1;
+        document.getElementById('turnIndicator').textContent = `${player1}'s turn`;
+      }
+    }
+
+    function determineWinner() {
+      const p1 = choices.player1;
+      const p2 = choices.player2;
+      let resultText = `${player1} chose ${p1}, ${player2} chose ${p2}. `;
+
+      if (p1 === p2) {
+        document.getElementById('drawSound').play();
+        resultText += "It's a draw!";
+      } else if (
+        (p1 === 'rock' && p2 === 'scissors') ||
+        (p1 === 'paper' && p2 === 'rock') ||
+        (p1 === 'scissors' && p2 === 'paper')
+      ) {
+        score1++;
+        document.getElementById('winSound').play();
+        resultText += `${player1} wins!`;
+      } else {
+        score2++;
+        document.getElementById('winSound').play();
+        resultText += `${player2} wins!`;
+      }
+
+      document.getElementById('score1').textContent = score1;
+      document.getElementById('score2').textContent = score2;
+      document.getElementById('result').textContent = resultText;
+      updateLeaderboard();
+    }
+
+    function updateLeaderboard() {
+      const leaderboard = [
+        { name: player1, wins: score1 },
+        { name: player2, wins: score2 }
+      ];
+      leaderboard.sort((a, b) => b.wins - a.wins);
+      const tbody = document.getElementById('leaderboardBody');
+      tbody.innerHTML = '';
+      leaderboard.forEach(player => {
+        const row = `<tr><td>${player.name}</td><td>${player.wins}</td></tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function resetGame() {
+      score1 = 0;
+      score2 = 0;
+      turn = 1;
+      choices = {};
+      document.getElementById('score1').textContent = score1;
+      document.getElementById('score2').textContent = score2;
+      document.getElementById('result').textContent = 'Game reset. Start again!';
+      document.getElementById('turnIndicator').textContent = `${player1}'s turn`;
+      updateLeaderboard();
+    }
+  </script>
+</body>
+</html>
